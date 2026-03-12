@@ -4,53 +4,80 @@ import sys
 import re
 import os
 
-def load_stop_words(stopwords_file='stopwords.txt'):
+def load_stop_words():
     stop_words = set()
+    # Load stopwords from the current directory (digital-librarian folder)
+    stopwords_file = 'stopwords.txt'
+    
     try:
-        if os.path.exists(stopwords_file):
-            with open(stopwords_file, 'r') as f:
-                for line in f:
-                    word = line.strip().lower()
-                    if word:
-                        stop_words.add(word)
-        else:
-            # Fallback stop words
-            default_stopwords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 
-                                'to', 'for', 'of', 'with', 'by', 'from', 'up', 'about', 
-                                'into', 'through', 'during', 'before', 'after', 'is', 'are', 
-                                'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had']
-            stop_words.update(default_stopwords)
+        with open(stopwords_file, 'r') as f:
+            for line in f:
+                word = line.strip().lower()
+                if word:  # Only add non-empty words
+                    stop_words.add(word)
+        print(f"Loaded {len(stop_words)} stop words from {stopwords_file}", file=sys.stderr)
+    except FileNotFoundError:
+        print(f"Error: {stopwords_file} not found in current directory!", file=sys.stderr)
+        print("Using minimal default stop words as fallback", file=sys.stderr)
+        # Fallback stop words
+        default_stopwords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 
+                            'to', 'for', 'of', 'with', 'by', 'from', 'is', 'are', 'was', 'were']
+        stop_words.update(default_stopwords)
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+        print(f"Error loading stop words: {e}", file=sys.stderr)
+        sys.exit(1)
     
     return stop_words
 
 def get_filename():
-    # For Hadoop Streaming
-    filename = os.environ.get('mapreduce_map_input_file', 'unknown')
-    return os.path.basename(filename)
+    # Get the current file name from Hadoop environment
+
+    filename = os.environ.get('mapreduce_map_input_file', '')
+    if filename:
+        return os.path.basename(filename)
+    else:
+        # For local testing, return a default name
+        return "sample.txt"
 
 def main():
+    # Load stop words
     stop_words = load_stop_words()
-    current_filename = get_filename()
     
+    # Get the document name
+    document_name = get_filename()
+    
+    # Process each line from stdin
     for line in sys.stdin:
+        # Remove leading/trailing whitespace
         line = line.strip()
         if not line:
             continue
         
-        # Convert to lowercase and remove punctuation
+        # Convert to lowercase
         line = line.lower()
+        
+        # Remove punctuation (keep only letters, numbers, and spaces)
         line = re.sub(r'[^a-zA-Z0-9\s]', ' ', line)
         
         # Split into words
         words = line.split()
         
+        # Process each word
         for word in words:
-            if len(word) <= 1 or word in stop_words:
+            # Skip empty words
+            if not word:
                 continue
             
-            print(f"{word}\t{current_filename}:1")
+            # Skip single-character words (like 'a', 'i')
+            if len(word) <= 1:
+                continue
+            
+            # Skip stop words
+            if word in stop_words:
+                continue
+            
+            # Output: word \t document_name:1
+            print(f"{word}\t{document_name}:1")
 
 if __name__ == "__main__":
     main()

@@ -14,12 +14,13 @@ def main():
         
         try:
             word, doc_info = line.split('\t', 1)
-            doc_name, count = doc_info.split(':', 1)
-            count = int(count)
+            doc_name, count_str = doc_info.split(':', 1)
+            count = int(count_str)
         except ValueError:
             continue
         
         if current_word and current_word != word:
+            # Output combined results for this word
             for doc, cnt in document_counts.items():
                 print(f"{current_word}\t{doc}:{cnt}")
             document_counts = defaultdict(int)
@@ -27,6 +28,7 @@ def main():
         current_word = word
         document_counts[doc_name] += count
     
+    # Output last word
     if current_word:
         for doc, cnt in document_counts.items():
             print(f"{current_word}\t{doc}:{cnt}")

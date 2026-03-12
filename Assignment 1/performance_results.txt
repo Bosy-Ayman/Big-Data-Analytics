@@ -1,0 +1,14 @@
+PERFORMANCE TEST RESULTS
+=======================
+Date: 12 مار, 2026 EET 07:25:07 م
+Books: 10
+Total size: ~9.3 MB
+
+Execution Times:
+1 node: 42 seconds
+2 nodes: 28 seconds
+3 nodes: 23 seconds
+
+Speedup:
+2 nodes: 1.50x
+3 nodes: 1.82x
