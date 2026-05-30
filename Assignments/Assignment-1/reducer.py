@@ -7,7 +7,7 @@ def main():
     current_word = None
     document_counts = defaultdict(int)
     
-    # Process each line from stdin
+    
     for line in sys.stdin:
         line = line.strip()
         if not line:
